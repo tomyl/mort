@@ -1,4 +1,4 @@
-# mort :fish:
+# mört :fish:
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/tomyl/mort)](https://goreportcard.com/report/github.com/tomyl/mort)
 
