@@ -1,11 +1,11 @@
 package store_test
 
 import (
-	"mort/store"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	"github.com/tomyl/mort/store"
 	"github.com/tomyl/xl"
 	"github.com/tomyl/xl/logger"
 )
