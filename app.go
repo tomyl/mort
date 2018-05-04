@@ -33,6 +33,7 @@ Task view keybindings
 Ctrl-N  Create new task.
 Enter   Edit selected task.
 /       Search task titles.
+s       Search task bodies.
 
 w       Toggle between day and week view.
 Left    Go to previous day/week.
