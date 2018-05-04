@@ -326,7 +326,7 @@ func (s *Store) GetTimesheet(r TimeRange) ([]TimesheetEntry, error) {
 	q.FromAlias("task", "n")
 	q.Where("t.task_id=n.id")
 	q.Where("t.clockin_at >= ?", r.Start)
-	q.Where("(t.clockout_at < ? OR t.clockout_at IS NULL)", r.End)
+	q.Where("(t.clockout_at < ? OR (t.clockout_at IS NULL AND t.clockin_at < ?))", r.End, r.End)
 
 	err := q.All(s.db, &entries)
 
