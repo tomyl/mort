@@ -209,20 +209,14 @@ func (app *mortApp) registerKeys(g *gocui.Gui) error {
 		app.layout(g)
 	}))
 
-	app.gx.SetKeybinding("", gocui.KeyF1, gocui.ModNone, xui.Handler(func() {
-		app.gx.Focus(app.help.View())
-		app.status.SetText("Help")
-	}))
+	app.gx.SetKeybinding("", gocui.KeyF1, gocui.ModNone, xui.Handler(app.showHelpView))
+	app.gx.SetKeybinding("", '1', gocui.ModNone, xui.Handler(app.showHelpView))
 
-	app.gx.SetKeybinding("", gocui.KeyF2, gocui.ModNone, xui.Handler(func() {
-		app.gx.Focus(app.tasks.View())
-		app.loadTasks()
-	}))
+	app.gx.SetKeybinding("", gocui.KeyF2, gocui.ModNone, xui.Handler(app.showTasksView))
+	app.gx.SetKeybinding("", '2', gocui.ModNone, xui.Handler(app.showTasksView))
 
-	app.gx.SetKeybinding("", gocui.KeyF3, gocui.ModNone, xui.Handler(func() {
-		app.gx.Focus(app.timesheet.View())
-		app.loadTimesheet()
-	}))
+	app.gx.SetKeybinding("", gocui.KeyF3, gocui.ModNone, xui.Handler(app.showTimesheetView))
+	app.gx.SetKeybinding("", '3', gocui.ModNone, xui.Handler(app.showTimesheetView))
 
 	// Tasks
 	app.gx.SetWidgetAction(app.tasks, gocui.KeyArrowUp, gocui.ModNone, xui.ActionPreviousLine)
@@ -354,6 +348,21 @@ func (app *mortApp) registerKeys(g *gocui.Gui) error {
 	}))
 
 	return app.gx.Err()
+}
+
+func (app *mortApp) showHelpView() {
+	app.gx.Focus(app.help.View())
+	app.status.SetText("Help")
+}
+
+func (app *mortApp) showTasksView() {
+	app.gx.Focus(app.tasks.View())
+	app.loadTasks()
+}
+
+func (app *mortApp) showTimesheetView() {
+	app.gx.Focus(app.timesheet.View())
+	app.loadTimesheet()
 }
 
 func (app *mortApp) setMessage(pat string, params ...interface{}) {
