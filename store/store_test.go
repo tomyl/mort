@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tomyl/mort/store"
 	"github.com/tomyl/xl"
-	"github.com/tomyl/xl/logger"
+	"github.com/tomyl/xl/testlogger"
 )
 
 func TestTimesheet(t *testing.T) {
-	xl.SetLogger(logger.Test(t))
+	xl.SetLogger(testlogger.Simple(t))
 
 	backenddb, err := xl.Open("sqlite3", ":memory:")
 
