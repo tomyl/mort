@@ -86,7 +86,9 @@ func (w *tasksWidget) render() {
 			ts := ""
 			age := now.Sub(task.UpdatedAt)
 
-			if age > 6*24*time.Hour {
+			if age > 365*24*time.Hour {
+				ts = task.UpdatedAt.Local().Format("06 Jan")
+			} else if age > 6*24*time.Hour {
 				ts = task.UpdatedAt.Local().Format("Jan 02")
 			} else if age > 23*time.Hour {
 				ts = task.UpdatedAt.Local().Format("Mon   ")
