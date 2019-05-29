@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/tomyl/gocui"
@@ -108,10 +109,14 @@ func (w *tasksWidget) render() {
 				prefix = "X "
 			}
 
-			line := color + prefix + ts + " " + task.Title + reset
+			line := color + prefix + ts + " " + _escape(task.Title) + reset
 			fmt.Fprintf(view, xui.Pad(line, sx))
 		}
 	}
+}
+
+func _escape(s string) string {
+	return strings.ReplaceAll(s, "%", "%%")
 }
 
 func (w *tasksWidget) HandleAction(action string) error {
