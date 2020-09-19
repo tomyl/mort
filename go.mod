@@ -9,6 +9,6 @@ require (
 	github.com/queria/golang-go-xdg v0.0.0-20150923124700-2891bf55123c
 	github.com/stretchr/testify v1.4.0
 	github.com/tomyl/gocui v0.3.1-0.20190529201612-028ccc25b58f
-	github.com/tomyl/xl v0.0.0-20200116194157-8f7668f1aa75
+	github.com/tomyl/xl v0.0.0-20200919090331-8da11cda7650
 	github.com/tomyl/xui v0.0.0-20180326153838-9437aec8495b
 )

@@ -1,6 +1,6 @@
 language: go
 go:
-  - "1.12"
+  - "1.15"
 script:
   - go build
   - go test -race -coverprofile=coverage.txt -covermode=atomic github.com/tomyl/mort/store
