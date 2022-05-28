@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS task (
 	project      TEXT NOT NULL,
 	title        TEXT NOT NULL,
 	body	     TEXT,
+	state        TEXT,
+	state_idx    INTEGER,
 
 	FOREIGN KEY (parent_id) REFERENCES task (id)
 );
@@ -71,6 +73,8 @@ type Task struct {
 	Project     string     `db:"project"`
 	Title       string     `db:"title"`
 	Body        string     `db:"body"`
+	State       *string    `db:"state"`
+	StateIdx    *int       `db:"state_idx"`
 
 	ClockinAtOld *time.Time `db:"clockedin_at"`
 }
@@ -78,6 +82,7 @@ type Task struct {
 type TaskQuery struct {
 	Project     string
 	Archived    bool
+	Todo        bool
 	ParentID    int64
 	SearchTitle string
 	SearchBody  string
@@ -130,7 +135,12 @@ func Default() (*Store, error) {
 
 func (s *Store) GetTasks(query TaskQuery) ([]Task, error) {
 	q := xl.Select("*").From("task")
-	q.OrderBy("updated_at DESC")
+
+	if query.Todo {
+		q.OrderBy("state_idx, updated_at DESC")
+	} else {
+		q.OrderBy("updated_at DESC")
+	}
 
 	if !query.Archived {
 		q.Where("archived_at IS NULL")
@@ -158,6 +168,10 @@ func (s *Store) GetTasks(query TaskQuery) ([]Task, error) {
 
 	if query.Range != nil {
 		q.Where("((created_at >= ? AND created_at < ?) OR (updated_at >= ? AND updated_at < ?))", query.Range.Start, query.Range.End, query.Range.Start, query.Range.End)
+	}
+
+	if query.Todo {
+		q.Where("state_idx IS NOT NULL")
 	}
 
 	tasks := []Task{}
@@ -228,6 +242,28 @@ func (s *Store) GetPausedTaskID() (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *Store) SetTodoState(id int64, idx int, state string) error {
+	tx, err := s.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if idx < 0 || state == "" {
+		if _, err := tx.Exec("UPDATE task SET state_idx=NULL, state=NULL WHERE id=:id", id); err != nil {
+			return err
+		}
+	} else {
+		if _, err := tx.Exec("UPDATE task SET state_idx=?, state=? WHERE id=:id", idx, state, id); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (s *Store) Clockin(id int64) error {

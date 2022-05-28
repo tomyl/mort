@@ -39,6 +39,8 @@ w       Toggle between day and week view.
 Left    Go to previous day/week.
 Right   Go to next day/week.
 
+Ctrl-T  Toggle todo state of selected task.
+t       Toggle display of todo tasks.
 Ctrl-X  Toggle archive status of selected task.
 x       Toggle display of archived tasks.
 p       Toggle project filter.
@@ -59,6 +61,18 @@ i       Edit clockin time.
 o       Edit clockout time.
 `
 )
+
+var todoStates = []string{"TODO", "WAIT", "DONE"}
+var todoColors = []string{"\033[31m", "\033[33m", "\033[32m"}
+
+func getStateIndex(state string) int {
+	for i := range todoStates {
+		if todoStates[i] == state {
+			return i
+		}
+	}
+	return -1
+}
 
 type restart struct {
 	f              func(restart)
@@ -90,6 +104,7 @@ type mortApp struct {
 	FilterRange    bool
 	FilterProject  string
 	FilterParentID int64
+	FilterTodo     bool
 }
 
 func newMortApp(db *store.Store) *mortApp {
@@ -174,6 +189,9 @@ func (app *mortApp) runOnce(state restart) error {
 			app.status.SetText("Help")
 		} else {
 			app.gx.Focus(app.tasks.View())
+			if state.task != nil {
+				app.tasks.SetCurrentByTaskID(state.task.ID)
+			}
 			app.setMessage("Press F1 for help.")
 		}
 	} else {
@@ -280,6 +298,15 @@ func (app *mortApp) registerKeys(g *gocui.Gui) error {
 		app.prompt.SetPrompt(g, "Search body: ", "", callback)
 	}))
 
+	app.gx.SetKeybinding("tasks", gocui.KeyCtrlT, gocui.ModNone, xui.Handler(func() {
+		app.toggleTodoState()
+	}))
+
+	app.gx.SetKeybinding("tasks", 't', gocui.ModNone, xui.Handler(func() {
+		app.FilterTodo = !app.FilterTodo
+		app.loadTasks()
+	}))
+
 	app.gx.SetKeybinding("tasks", 'v', gocui.ModNone, xui.Handler(func() {
 		app.openCurrentTask()
 	}))
@@ -377,12 +404,14 @@ func (app *mortApp) loadTasks() error {
 		SearchBody:  app.FilterBody,
 		Project:     app.FilterProject,
 		ParentID:    app.FilterParentID,
+		Todo:        app.FilterTodo,
 	}
 
 	if app.FilterRange {
 		query.Range = &app.Range
 	}
 
+	current := app.tasks.CurrentTask()
 	tasks, err := app.db.GetTasks(query)
 
 	if err != nil {
@@ -390,6 +419,11 @@ func (app *mortApp) loadTasks() error {
 	}
 
 	app.tasks.SetModel(tasks)
+
+	if current != nil {
+		app.tasks.SetCurrentByTaskID(current.ID)
+	}
+
 	app.showTasksQuery()
 
 	return nil
@@ -640,6 +674,47 @@ func (app *mortApp) editTask(r restart) {
 	app.setMessage("Updated task.")
 }
 
+func (app *mortApp) toggleTodoState() {
+	task := app.tasks.CurrentTask()
+
+	if task == nil {
+		app.setMessage("No task.")
+		return
+	}
+
+	newStateIdx := 0
+	newState := todoStates[newStateIdx]
+
+	if task.State != nil {
+		idx := getStateIndex(*task.State)
+		if idx >= 0 {
+			if idx < len(todoStates)-1 {
+				newStateIdx = idx + 1
+				newState = todoStates[newStateIdx]
+			} else {
+				newState = ""
+			}
+		}
+	}
+
+	if err := app.db.SetTodoState(task.ID, newStateIdx, newState); err != nil {
+		app.setMessage("Failed to toggle state: %s", err)
+		return
+	}
+
+	task, err := app.refreshTask(task.ID)
+
+	if err != nil {
+		return
+	}
+
+	if task != nil {
+		app.tasks.render()
+	}
+
+	app.setMessage("")
+}
+
 func (app *mortApp) clockIn() {
 	task := app.tasks.CurrentTask()
 
@@ -653,7 +728,6 @@ func (app *mortApp) clockIn() {
 		return
 	}
 
-	app.tasks.SetCurrent(0)
 	app.loadTasks()
 	app.setMessage("Clocked in.")
 }
@@ -676,7 +750,6 @@ func (app *mortApp) clockOut() {
 		return
 	}
 
-	app.tasks.SetCurrent(0)
 	app.loadTasks()
 	app.setMessage("Clocked out.")
 }

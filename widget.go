@@ -44,6 +44,14 @@ func (w *tasksWidget) SetCurrent(idx int) error {
 	return w.base.SetCurrent(idx)
 }
 
+func (w *tasksWidget) SetCurrentByTaskID(taskID int64) error {
+	currentIdx := w.GetTaskIndexByID(taskID)
+	if currentIdx >= 0 {
+		return w.SetCurrent(currentIdx)
+	}
+	return w.SetCurrent(0)
+}
+
 func (w *tasksWidget) CurrentTask() *store.Task {
 	if len(w.model) > 0 {
 		current := w.base.Current()
@@ -111,7 +119,15 @@ func (w *tasksWidget) render() {
 				prefix = "X "
 			}
 
-			line := color + prefix + ts + " " + _escape(task.Title) + reset
+			state := ""
+			if task.State != nil {
+				idx := getStateIndex(*task.State)
+				if idx >= 0 {
+					state = todoColors[idx] + *task.State + reset + " "
+				}
+			}
+
+			line := color + prefix + ts + " " + state + _escape(task.Title) + reset
 			fmt.Fprintf(view, xui.Pad(line, sx))
 		}
 	}

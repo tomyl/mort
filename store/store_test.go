@@ -118,3 +118,40 @@ func TestTimesheet(t *testing.T) {
 		require.Equal(t, 2, len(tasks))
 	}
 }
+
+func TestState(t *testing.T) {
+	xl.SetLogger(testlogger.Simple(t))
+
+	backenddb, err := xl.Open("sqlite3", ":memory:")
+	require.Nil(t, err)
+
+	store.InitSchema(backenddb)
+
+	db := store.New(backenddb)
+	var taskId int64
+
+	{
+		var payload store.Task
+		payload.Body = "test"
+
+		taskId, err = db.CreateTask(payload)
+		require.Nil(t, err)
+	}
+
+	require.Nil(t, db.SetTodoState(taskId, 42, "TODO"))
+
+	{
+		task, err := db.GetTaskByID(taskId)
+		require.Nil(t, err)
+		require.NotNil(t, task.State)
+		require.Equal(t, "TODO", *task.State)
+	}
+
+	require.Nil(t, db.SetTodoState(taskId, -1, ""))
+
+	{
+		task, err := db.GetTaskByID(taskId)
+		require.Nil(t, err)
+		require.Nil(t, task.State)
+	}
+}
