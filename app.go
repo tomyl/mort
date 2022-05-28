@@ -440,7 +440,12 @@ func (app *mortApp) resetFilters() {
 }
 
 func (app *mortApp) showTasksQuery() {
-	msg := fmt.Sprintf("%d tasks", len(app.tasks.model))
+	var msg string
+	if app.FilterTodo {
+		msg = fmt.Sprintf("%d todo tasks", len(app.tasks.model))
+	} else {
+		msg = fmt.Sprintf("%d tasks", len(app.tasks.model))
+	}
 	filters := make([]string, 0)
 	if !app.FilterArchived {
 		filters = append(filters, "Archived hidden")
