@@ -154,11 +154,49 @@ func cmdNewTask(db *store.Store, project, title *string) {
 	log.Printf("Created task %d", taskID)
 }
 
+func cmdListTasks(db *store.Store, project *string) {
+	var query store.TaskQuery
+	if project != nil {
+		query.Project = *project
+	}
+
+	tasks, err := db.GetTasks(query)
+	if err != nil {
+		log.Fatalf("Failed to store task: %v", err)
+		return
+	}
+
+	for _, task := range tasks {
+		fmt.Printf("%s\n", task.Title)
+	}
+}
+
+func cmdQueryTasks(db *store.Store, project *string) {
+	if project == nil || *project == "" {
+		log.Fatalf("Please provide -project")
+	}
+
+	var query store.TaskQuery
+	query.Project = *project
+
+	tasks, err := db.GetTasks(query)
+	if err != nil {
+		log.Fatalf("Failed to store task: %v", err)
+		return
+	}
+
+	if len(tasks) == 0 {
+		os.Exit(1)
+	}
+}
+
 func main() {
 	newtask := flag.Bool("new", false, "Create new task")
 	project := flag.String("project", "", "Project for new note")
 	title := flag.String("title", "", "Title for new note")
 
+	list := flag.Bool("list", false, "List tasks")
+	query := flag.Bool("query", false, "Query tasks. Analogous to grep --quiet.")
 	pause := flag.Bool("pause", false, "Pause current task (or clockin again)")
 	clock := flag.Bool("clock", false, "Return current checkin duration")
 	today := flag.Bool("today", false, "Return total checkin duration today")
@@ -179,6 +217,10 @@ func main() {
 		cmdCheckinDurationToday(db)
 	case *newtask:
 		cmdNewTask(db, project, title)
+	case *list:
+		cmdListTasks(db, project)
+	case *query:
+		cmdQueryTasks(db, project)
 	default:
 		cmdRun(db)
 	}
